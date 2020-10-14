@@ -11,9 +11,9 @@ import NotEnoughArgumentsError from "./Errors/NotEnoughArgumentsError.js";
 import path from "path";
 
 async function main() {
-    const [type, sourcePath, outputPath, keyPath, method] = process.argv.slice(2);
+    const [type, lang, sourcePath, outputPath, keyPath, method] = process.argv.slice(2);
     try {
-        if (!type || !sourcePath || !outputPath || !keyPath) {
+        if (!type || !lang || !sourcePath || !outputPath || !keyPath) {
             throw new NotEnoughArgumentsError("Incorrect set of arguments passed");
         }
         if(!fs.existsSync(sourcePath)) {
@@ -22,7 +22,7 @@ async function main() {
         const text = fs.readFileSync(sourcePath).toString();
         switch (type) {
             case "encrypt":
-                const encryptor = new Encryptor(123, method);
+                const encryptor = new Encryptor(123, method, lang);
                 const encrypted = encryptor.encrypt(text);
                 fs.writeFileSync(outputPath, encrypted);
                 fs.writeFileSync(keyPath, encryptor.getGamma());
@@ -33,7 +33,7 @@ async function main() {
                     throw new SourceFileNotExistsError("Key file doesn't exist");
                 }
                 const key = fs.readFileSync(keyPath).toString();
-                const decryptor = new Decryptor(key);
+                const decryptor = new Decryptor(key, lang);
                 const decrypted = decryptor.decrypt(text);
                 fs.writeFileSync(outputPath, decrypted);
                 process.exit();
