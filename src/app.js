@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import question from './question.js';
 import Encryptor from './Encryptor.js';
 import Decryptor from './Decryptor.js';
 import fs from "fs";
@@ -8,7 +7,6 @@ import CryptoError from "./Errors/CryptoError.js";
 import IncorrectTypeError from "./Errors/IncorrectTypeError.js";
 import SourceFileNotExistsError from "./Errors/SourceFileNotExistsError.js";
 import NotEnoughArgumentsError from "./Errors/NotEnoughArgumentsError.js";
-import path from "path";
 
 async function main() {
     const [type, lang, sourcePath, outputPath, keyPath, method] = process.argv.slice(2);
