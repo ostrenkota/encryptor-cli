@@ -6,7 +6,7 @@ class Encryptor {
     static defaultGenerationMethod = "method1";
     static cyrillicAlphabet = "абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
     static latinAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    constructor(key, GammaEncryptionType, alphabet) {
+    constructor(GammaEncryptionType, alphabet) {
         GammaEncryptionType = GammaEncryptionType || Encryptor.defaultGenerationMethod;
         if (!Encryptor.prototype.hasOwnProperty(GammaEncryptionType)
             || typeof this[GammaEncryptionType] !== "function") {
@@ -22,23 +22,49 @@ class Encryptor {
             default:
                 throw new IncorrectAlphabetError("Incorrect alphabet name. Type 'en' or 'ru'");
         }
-        this[GammaEncryptionType](key);
+        this[GammaEncryptionType]();
     }
 
-    method1(key) {
-        this.#gamma = "";
-        for (let i = 0; i < 200; i++) {
-            let letterIndex = Math.round(Math.random() * (this.alphabet.length - 1));
-            this.#gamma += this.alphabet[letterIndex];
-        }
+    method1() {
+        let today = new Date();
+        let seconds = String(today.getTime());
+        let dd = String(today.getDate()).padStart(2, '0');
+        let mm = String(today.getMonth() + 1).padStart(2, '0');
+        let yyyy = today.getFullYear();
+        let key = mm + dd + yyyy + seconds;
+        this.generateGammaFromKey(key)
     }
 
-    method2(key) {
+    method2() {
+        let today = new Date();
+        let hour = today.getHours();
+        let min = String(today.getMinutes());
+        let sec = String(today.getSeconds());
+        let millisec = String(today.getMilliseconds());
+        let key = min + sec + millisec + hour;
+        this.generateGammaFromKey(key)
+    }
+
+    method3() {
+        let today = new Date();
+        let dd = String(today.getDate()).padStart(2, '0');
+        let min = String(today.getMinutes());
+        let seconds = String(today.getTime());
+        let millisec = String(today.getMilliseconds());
+        let key = seconds + min + dd + millisec;
+        this.generateGammaFromKey(key)
+    }
+
+    generateGammaFromKey(key){
         this.#gamma = "";
-        for (let i = 0; i < 400; i++) {
-            let letterIndex = Math.round(Math.random() * (this.alphabet.length - 1));
-            this.#gamma += this.alphabet[letterIndex];
+        for (let i = 0; i < 5; i++) {
+            key += key.shuffle();
         }
+        key = key.match(/(..?)/g);
+        key.forEach(( elem, index) => {
+            key[index] = elem % this.alphabet.length;
+            this.#gamma += this.alphabet[key[index]];
+        })
     }
 
     encrypt(text) {
