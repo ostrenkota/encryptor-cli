@@ -1,16 +1,21 @@
 import IncorrectMethodError from "./Errors/IncorrectMethodError.js";
 import IncorrectAlphabetError from "./Errors/IncorrectAlphabetError.js";
+import IncorrectKeyError from "./Errors/IncorrectKeyError.js";
 
 class Encryptor {
     #gamma;
     static defaultGenerationMethod = "method1";
-    static cyrillicAlphabet = "абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
-    static latinAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    constructor(GammaEncryptionType, alphabet) {
+    static cyrillicAlphabet = "абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ.,/()[]{}?!:\'\"\n\r ";
+    static latinAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,/()[]{}?!:\'\"\n\r ";
+    constructor(GammaEncryptionType, alphabet, key, text) {
         GammaEncryptionType = GammaEncryptionType || Encryptor.defaultGenerationMethod;
+        key = key || 1000;
         if (!Encryptor.prototype.hasOwnProperty(GammaEncryptionType)
             || typeof this[GammaEncryptionType] !== "function") {
             throw new IncorrectMethodError("Incorrect gamma key creation method.");
+        }
+        if (key > 99999 || key < 99) {
+            throw new IncorrectKeyError("Incorrect key given. The key must be between 99 and 99999");
         }
         switch (alphabet) {
             case "ru":
@@ -22,63 +27,66 @@ class Encryptor {
             default:
                 throw new IncorrectAlphabetError("Incorrect alphabet name. Type 'en' or 'ru'");
         }
-        this[GammaEncryptionType]();
+        this[GammaEncryptionType](key, text.length);
     }
 
-    method1() {
-        let today = new Date();
-        let seconds = String(today.getTime());
-        let dd = String(today.getDate()).padStart(2, '0');
-        let mm = String(today.getMonth() + 1).padStart(2, '0');
-        let yyyy = today.getFullYear();
-        let key = mm + dd + yyyy + seconds;
-        this.generateGammaFromKey(key)
-    }
-
-    method2() {
-        let today = new Date();
-        let hour = today.getHours();
-        let min = String(today.getMinutes());
-        let sec = String(today.getSeconds());
-        let millisec = String(today.getMilliseconds());
-        let key = min + sec + millisec + hour;
-        this.generateGammaFromKey(key)
-    }
-
-    method3() {
-        let today = new Date();
-        let dd = String(today.getDate()).padStart(2, '0');
-        let min = String(today.getMinutes());
-        let seconds = String(today.getTime());
-        let millisec = String(today.getMilliseconds());
-        let key = seconds + min + dd + millisec;
-        this.generateGammaFromKey(key)
-    }
-
-    generateGammaFromKey(key){
-        this.#gamma = "";
-        for (let i = 0; i < 5; i++) {
-            key += key.shuffle();
+    method1(key, textLen) {
+        let gammaKey = "";
+        const a = 45;
+        const c = 21;
+        const m = 1630;
+        const rand = () => key = (a * key + c) % m;
+        while (gammaKey.length < textLen * 2) {
+            gammaKey += String(rand());
         }
-        key = key.match(/(..?)/g);
-        key.forEach(( elem, index) => {
-            key[index] = elem % this.alphabet.length;
-            this.#gamma += this.alphabet[key[index]];
+        this.generateGammaFromKey(gammaKey);
+    }
+
+    method2(key, textLen) {
+        let gammaKey = "";
+        const a = 72;
+        const m = 3831;
+        const rand = () => key = (a * key) % m;
+        while (gammaKey.length < textLen * 2) {
+            gammaKey += String(rand());
+        }
+        this.generateGammaFromKey(gammaKey);
+    }
+
+    method3(key, textLen) {
+        let gammaKey = "";
+        const a = 108;
+        const b = 88;
+        const m = 6172;
+        const rand = () => key = (key * a - b) % m;
+        while (gammaKey.length < textLen * 2) {
+            gammaKey += String(rand());
+        }
+        this.generateGammaFromKey(gammaKey);
+    }
+
+    generateGammaFromKey(gammaKey){
+        this.#gamma = "";
+        gammaKey = gammaKey.match(/(..?)/g);
+        gammaKey.forEach((elem, index) => {
+            gammaKey[index] = elem % this.alphabet.length;
+            this.#gamma += this.alphabet[gammaKey[index]];
         })
     }
 
     encrypt(text) {
-        text = text.replace(/[^a-zA-Zа-яА-Я]/g, "");
         let encryptionResult = "", textLetterNumber, gammaLetterNumber, resultLetterNumber;
-        while (this.#gamma.length < text.length){
-            this.#gamma += this.#gamma;
-            if (this.#gamma.length > text.length) {
-                this.#gamma = this.#gamma.substr(0, text.length)
-            }
+        let gamma = this.#gamma;
+        if (gamma.length > text.length) {
+            gamma = gamma.substr(0, text.length)
         }
         for (let i = 0; i < text.length; i++) {
+            if (!this.alphabet.includes(text[i])) {
+                encryptionResult += text[i];
+                continue;
+            }
             for (let j = 0; j < this.alphabet.length; j++) {
-                if (this.#gamma[i] === this.alphabet[j]) {
+                if (gamma[i] === this.alphabet[j]) {
                     gammaLetterNumber = j;
                 }
                 if (text[i] === this.alphabet[j]) {

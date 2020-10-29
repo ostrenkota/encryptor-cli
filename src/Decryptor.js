@@ -2,8 +2,8 @@ import IncorrectAlphabetError from "./Errors/IncorrectAlphabetError.js";
 
 class Decryptor {
     #gamma;
-    static cyrillicAlphabet = "абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
-    static latinAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static cyrillicAlphabet = "абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ.,/()[]{}?!:\'\"\n\r ";
+    static latinAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,/()[]{}?!:\'\"\n\r ";
     constructor(gammaKey, alphabet) {
         this.#gamma = gammaKey;
         switch (alphabet) {
@@ -19,25 +19,23 @@ class Decryptor {
     }
 
     decrypt(text) {
-        text = text.replace(/[^a-zA-Zа-яА-Я]/g, "");
         let decryptionResult = "", textLetterNumber, gammaLetterNumber, resultLetterNumber;
-        while (this.#gamma.length < text.length){
-            this.#gamma += this.#gamma;
-            if (this.#gamma.length > text.length) {
-                this.#gamma = this.#gamma.substr(0, text.length)
-            }
-        }
+        let gamma = this.#gamma;
         for (let i = 0; i < text.length; i++)
         {
+            if (!this.alphabet.includes(text[i])) {
+                decryptionResult += text[i];
+                continue;
+            }
             for (let j = 0; j < this.alphabet.length; j++)
             {
-                if (this.#gamma[i] === this.alphabet[j]) {
+                if (gamma[i] === this.alphabet[j]) {
                     textLetterNumber = j;
                 }
                 if (text[i] === this.alphabet[j]) {
                     gammaLetterNumber = j;
                 }
-                resultLetterNumber = (this.alphabet.indexOf(text[i]) - this.alphabet.indexOf(this.#gamma[i]) +
+                resultLetterNumber = (this.alphabet.indexOf(text[i]) - this.alphabet.indexOf(gamma[i]) +
                     this.alphabet.length) % this.alphabet.length;
             }
             decryptionResult += this.alphabet[resultLetterNumber];

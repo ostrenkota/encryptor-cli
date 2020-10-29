@@ -9,20 +9,7 @@ import SourceFileNotExistsError from "./Errors/SourceFileNotExistsError.js";
 import NotEnoughArgumentsError from "./Errors/NotEnoughArgumentsError.js";
 
 
-String.prototype.shuffle = function () {
-    let a = this.split(""),
-        n = a.length;
-
-    for(let i = n - 1; i > 0; i--) {
-        let j = Math.floor(Math.random() * (i + 1));
-        let tmp = a[i];
-        a[i] = a[j];
-        a[j] = tmp;
-    }
-    return a.join("");
-}
-
-const [type, lang, sourcePath, outputPath, keyPath, method] = process.argv.slice(2);
+const [type, lang, sourcePath, outputPath, keyPath, method, key] = process.argv.slice(2);
 try {
     if (!type || !lang || !sourcePath || !outputPath || !keyPath) {
         throw new NotEnoughArgumentsError("Incorrect set of arguments passed");
@@ -33,8 +20,9 @@ try {
     const text = fs.readFileSync(sourcePath).toString();
     switch (type) {
         case "encrypt":
-            const encryptor = new Encryptor(method, lang);
+            const encryptor = new Encryptor(method, lang, key, text);
             const encrypted = encryptor.encrypt(text);
+            console.log(encrypted);
             fs.writeFileSync(outputPath, encrypted);
             fs.writeFileSync(keyPath, encryptor.getGamma());
             process.exit();
@@ -43,8 +31,8 @@ try {
             if(!fs.existsSync(keyPath)) {
                 throw new SourceFileNotExistsError("Key file doesn't exist");
             }
-            const key = fs.readFileSync(keyPath).toString();
-            const decryptor = new Decryptor(key, lang);
+            const gammaKey = fs.readFileSync(keyPath).toString();
+            const decryptor = new Decryptor(gammaKey, lang);
             const decrypted = decryptor.decrypt(text);
             fs.writeFileSync(outputPath, decrypted);
             process.exit();
@@ -53,12 +41,14 @@ try {
             throw new IncorrectTypeError("Please choose encrypt or decrypt type");
     }
 } catch (e) {
-    console.log("Format:\ncrypto <type> <language> <inputPath> <outputPath> <keyPath> [<method>]\n\ntype: encrypt or decrypt" +
+    console.log("Format:\ncrypto <type> <language> <inputPath> <outputPath> <keyPath> [<method>] [<key>]\n\ntype: " +
+        "encrypt or decrypt" +
         "\nlanguage -- language of text to encrypt: ru or en" +
         "\ninputPath -- absolute path to file with text to encrypt" +
         "\noutputPath -- absolute path to file where the result should be written" +
         "\nkeyPath -- path to the file from which to take or to which the gamma key should be written" +
-        "\nmethod -- method of gamma-key creation: method1 or method2 (for encrypt type)\n\n");
+        "\nmethod -- method of gamma-key creation: method1 or method2 or method3 (for encrypt type)" +
+        "\nkey -- start number for gamma-key generation: between 99 and 99999 (for encrypt type)\n\n");
     if(e instanceof CryptoError) {
         console.log(`${e.name}: ${e.message}`);
     } else {
